@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useDebate } from '../../contexts/DebateContext.jsx';
 import { 
   Calendar, Search, Filter, ChevronDown, X, Tag,
-  Users, ThumbsUp, Award, Video, Clock
+  Users, ThumbsUp,ThumbsDown, Award, Video, Clock
 } from 'lucide-react';
 import LoadingScreen from '../../components/common/LoadingScreen.jsx';
 

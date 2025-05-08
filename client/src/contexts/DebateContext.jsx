@@ -122,21 +122,48 @@ export const DebateProvider = ({ children }) => {
   
   useEffect(() => {
     // Simulate API fetch
+    // const fetchDebates = async () => {
+    //   try {
+    //     setLoading(true);
+        
+    //     // Simulate network delay
+    //     await new Promise(resolve => setTimeout(resolve, 500));
+        
+    //     setDebates(mockDebates);
+        
+    //     // Set a subset as user's debates (would normally be filtered by API)
+    //     setUserDebates(mockDebates.slice(0, 3));
+        
+    //     setLoading(false);
+    //   } catch (error) {
+    //     console.error('Error fetching debates:', error);
+    //     setLoading(false);
+    //   }
+    // };
     const fetchDebates = async () => {
       try {
         setLoading(true);
-        
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        setDebates(mockDebates);
-        
-        // Set a subset as user's debates (would normally be filtered by API)
-        setUserDebates(mockDebates.slice(0, 3));
-        
-        setLoading(false);
+    
+        const token = localStorage.getItem('token');
+    
+        const res = await axios.get('http://localhost:5000/api/debates', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+    
+        const allDebates = res.data.debates || res.data; // adjust based on your API response
+    
+        setDebates(allDebates);
+    
+        // Optional: Set a subset as user's debates based on logged-in user ID
+        const user = JSON.parse(localStorage.getItem('user'));
+        const filtered = allDebates.filter(debate => debate.moderator?.id === user?.id);
+        setUserDebates(filtered);
+    
       } catch (error) {
         console.error('Error fetching debates:', error);
+      } finally {
         setLoading(false);
       }
     };
