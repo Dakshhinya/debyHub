@@ -129,7 +129,7 @@ const CreateDebate = () => {
         reactionsEnabled,
         featuredImage: featuredImage || sampleImages[0]
       };
-      
+      console.log('asshole',debateData);
       const newDebate = await createDebate(debateData);
       
       // Navigate to debate details

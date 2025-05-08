@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
 
 const DebateContext = createContext();
 
@@ -146,7 +148,7 @@ export const DebateProvider = ({ children }) => {
     return debates.find(debate => debate.id === id);
   };
   
-  const createDebate = (debateData) => {
+  const createDebate = async(debateData) => {
     const newDebate = {
       id: `debate_${Date.now()}`,
       ...debateData,
@@ -154,11 +156,20 @@ export const DebateProvider = ({ children }) => {
       audience: 0,
       dateCreated: new Date().toISOString(),
     };
+    const response = await axios.post('http://localhost:5000/api/debates', newDebate, {
+      headers: {
+        'Content-Type': 'application/json',
+        // Include the authentication token (if needed)
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+
+    // The response will contain the created debate from the backend
+    const savedDebate = response.data;
+    setDebates(prev => [savedDebate, ...prev]);
+    setUserDebates(prev => [savedDebate, ...prev]);
     
-    setDebates(prev => [newDebate, ...prev]);
-    setUserDebates(prev => [newDebate, ...prev]);
-    
-    return newDebate;
+    return savedDebate;
   };
   
   const updateDebate = (id, updates) => {

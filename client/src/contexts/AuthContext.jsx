@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -28,18 +29,19 @@ export const AuthProvider = ({ children }) => {
     try {
       // This would be replaced with an actual API call
       // Simulating API response
-      const mockUser = {
-        id: 'usr_' + Math.random().toString(36).substring(2, 10),
-        name: email.split('@')[0],
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        // name,
         email,
-        role: email.includes('admin') ? 'admin' : 
-              email.includes('moderator') ? 'moderator' : 'user',
-        createdAt: new Date().toISOString(),
-      };
+        password,
+        // role, // <-- Send role
+      });
+
+      const { user, token } = response.data;
       
-      setUser(mockUser);
+      setUser(user);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token',token);
       
       return { success: true };
     } catch (error) {
@@ -50,21 +52,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
   
-  const register = async (name, email, password) => {
+  const register = async (name, email, password,role) => {
     try {
       // This would be replaced with an actual API call
       // Simulating API response
-      const mockUser = {
-        id: 'usr_' + Math.random().toString(36).substring(2, 10),
+      const response = await axios.post('http://localhost:5000/api/auth/register', {
         name,
         email,
-        role: 'user',
-        createdAt: new Date().toISOString(),
-      };
+        password,
+        role, // <-- Send role
+      });
+
+      const { user, token } = response.data;
       
-      setUser(mockUser);
+      setUser(user);
       setIsAuthenticated(true);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('token',token);
       
       return { success: true };
     } catch (error) {

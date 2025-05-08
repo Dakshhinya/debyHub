@@ -22,25 +22,8 @@ const ManageUsers = () => {
       status: 'active',
       joinDate: '2025-01-15',
       lastLogin: '2025-03-20'
-    },
-    {
-      id: 2,
-      name: 'Moderator User',
-      email: 'moderator@example.com',
-      role: 'moderator',
-      status: 'active',
-      joinDate: '2025-02-01',
-      lastLogin: '2025-03-19'
-    },
-    {
-      id: 3,
-      name: 'Regular User',
-      email: 'user@example.com',
-      role: 'user',
-      status: 'active',
-      joinDate: '2025-02-15',
-      lastLogin: '2025-03-18'
     }
+    
   ];
   
   const handleSelectUser = (userId) => {
