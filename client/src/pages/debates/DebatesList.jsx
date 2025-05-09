@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useDebate } from '../../contexts/DebateContext.jsx';
 import { 
   Calendar, Search, Filter, ChevronDown, X, Tag,
-  Users, ThumbsUp,ThumbsDown, Award, Video, Clock
+  Users, ThumbsUp, ThumbsDown, Award, Video, Clock,
+  Trash2, Edit, MoreVertical
 } from 'lucide-react';
 import LoadingScreen from '../../components/common/LoadingScreen.jsx';
 
 const DebatesList = () => {
-  const { debates, loading } = useDebate();
+  const { debates, loading, deleteDebate } = useDebate();
+  const navigate = useNavigate();
   
   // State for filters
   const [filteredDebates, setFilteredDebates] = useState([]);
@@ -92,6 +94,23 @@ const DebatesList = () => {
     setSearchQuery('');
     setStatusFilter('all');
     setCategoryFilter('');
+  };
+
+  // Handle edit debate
+  const handleEditDebate = (e, debateId) => {
+    e.preventDefault(); // Prevent the Link from navigating to debate details
+    e.stopPropagation(); // Stop event propagation
+    navigate(`/debates/edit/${debateId}`);
+  };
+  
+  // Handle delete debate
+  const handleDeleteDebate = (e, debateId) => {
+    e.preventDefault(); // Prevent the Link from navigating to debate details
+    e.stopPropagation(); // Stop event propagation
+    
+    if (window.confirm('Are you sure you want to delete this debate? This action cannot be undone.')) {
+      deleteDebate(debateId);
+    }
   };
   
   if (loading) {
@@ -251,12 +270,12 @@ const DebatesList = () => {
             <Link
               key={debate.id}
               to={`/debates/${debate.id}`}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
             >
               {/* Debate Image */}
               <div className="relative h-48">
                 <img
-                  src={debate.image || 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg'}
+                  src={debate.featuredImage}
                   alt={debate.title}
                   className="w-full h-full object-cover"
                 />
@@ -286,6 +305,24 @@ const DebatesList = () => {
                 {/* Category Badge */}
                 <div className="absolute top-4 right-4 bg-white/90 text-neutral-800 px-3 py-1 rounded-full text-sm font-medium">
                   {debate.category}
+                </div>
+
+                {/* Edit and Delete Buttons */}
+                <div className="absolute bottom-4 right-4 flex gap-2">
+                  <button 
+                    onClick={(e) => handleEditDebate(e, debate.id)}
+                    className="bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors"
+                    title="Edit Debate"
+                  >
+                    <Edit size={16} className="text-neutral-700" />
+                  </button>
+                  <button 
+                    onClick={(e) => handleDeleteDebate(e, debate.id)}
+                    className="bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors"
+                    title="Delete Debate"
+                  >
+                    <Trash2 size={16} className="text-error" />
+                  </button>
                 </div>
               </div>
               
