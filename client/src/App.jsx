@@ -6,6 +6,9 @@ import { ThemeProvider } from './contexts/ThemeContext.jsx';
 import ProtectedRoute from './components/auth/ProtectedRoute.jsx';
 import RoleBasedRoute from './components/auth/RoleBasedRoute.jsx';
 
+// Import the debug component
+// import DebugEditComponent from './pages/debates/DebugEditComponent.jsx'; // Adjust path as needed
+
 // Layout Components
 import MainLayout from './layouts/MainLayout.jsx';
 
@@ -24,6 +27,7 @@ import NotFound from './pages/NotFound.jsx';
 import DebatesList from './pages/debates/DebatesList.jsx';
 import DebateRoom from './pages/debates/DebateRoom.jsx';
 import CreateDebate from './pages/debates/CreateDebate.jsx';
+// import EditDebate from './pages/debates/EditDebate.jsx';
 import DebateDetails from './pages/debates/DebateDetails.jsx';
 
 // Admin Pages
@@ -49,15 +53,17 @@ function App() {
                 
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
+                  {/* Moderator Routes */}
+                  <Route element={<RoleBasedRoute roles={['moderator', 'admin']} />}>
+                    {/* <Route path="/debates/:id/edit" element={<EditDebate />} /> */}
+                    {/* <Route path="/debates/:id/edit-protected" element={<EditDebate />} /> */}
+                    <Route path="/debates/create" element={<CreateDebate />} />
+                  </Route>
+
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/debates" element={<DebatesList />} />
                   <Route path="/debates/:id" element={<DebateDetails />} />
-                  
-                  {/* Moderator Routes */}
-                  <Route element={<RoleBasedRoute roles={['moderator', 'admin']} />}>
-                    <Route path="/debates/create" element={<CreateDebate />} />
-                  </Route>
                   
                   {/* Debate Room */}
                   <Route path="/debates/:id/room" element={<DebateRoom />} />

@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useDebate } from '../../contexts/DebateContext.jsx';
 import { 
   Calendar, Search, Filter, ChevronDown, X, Tag,
-  Users, ThumbsUp, ThumbsDown, Award, Video, Clock,
-  Trash2, Edit, MoreVertical
+  Users, ThumbsUp, Award, Video, Clock, Edit2, Trash2, ThumbsDown
 } from 'lucide-react';
 import LoadingScreen from '../../components/common/LoadingScreen.jsx';
 
 const DebatesList = () => {
-  const { debates, loading, deleteDebate } = useDebate();
-  const navigate = useNavigate();
+  const { debates, loading, updateDebate, deleteDebate } = useDebate();
   
   // State for filters
   const [filteredDebates, setFilteredDebates] = useState([]);
@@ -18,6 +16,20 @@ const DebatesList = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  
+  // State for edit modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [currentDebate, setCurrentDebate] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    category: '',
+    tags: [],
+    dateTime: '',
+    status: '',
+    featuredImage: '',
+    votingEnabled: false
+  });
   
   // Category options
   const categories = [
@@ -95,23 +107,108 @@ const DebatesList = () => {
     setStatusFilter('all');
     setCategoryFilter('');
   };
-
-  // Handle edit debate
-  const handleEditDebate = (e, debateId) => {
-    e.preventDefault(); // Prevent the Link from navigating to debate details
-    e.stopPropagation(); // Stop event propagation
-    navigate(`/debates/edit/${debateId}`);
+  
+  // Format date-time for input fields
+  const formatDateTimeForInput = (dateStr) => {
+    try {
+      const date = new Date(dateStr);
+      // Check if date is valid before converting to ISO string
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      return date.toISOString().slice(0, 16);
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return ''; // Return empty string if date is invalid
+    }
+  };
+  
+  // Handle opening the edit modal
+  const handleEditClick = (debate) => {
+    setCurrentDebate(debate);
+    setEditForm({
+      title: debate.title,
+      description: debate.description,
+      category: debate.category || '',
+      tags: debate.tags || [],
+      dateTime: formatDateTimeForInput(debate.dateTime),
+      status: debate.status,
+      featuredImage: debate.featuredImage || '',
+      votingEnabled: debate.votingEnabled || false
+    });
+    setIsEditModalOpen(true);
+  };
+  
+  // Handle closing the edit modal
+  const handleCloseModal = () => {
+    setIsEditModalOpen(false);
+    setCurrentDebate(null);
+  };
+  
+  // Handle form field changes
+  const handleFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setEditForm(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+  
+  // Handle tags input
+  const handleTagsChange = (e) => {
+    const tagsString = e.target.value;
+    const tagsArray = tagsString.split(',').map(tag => tag.trim()).filter(tag => tag);
+    setEditForm(prev => ({
+      ...prev,
+      tags: tagsArray
+    }));
+  };
+  
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    // e.preventDefault();
+    if (!currentDebate) return;
+    
+    try {
+      // Validate date before converting
+      const dateTime = editForm.dateTime ? new Date(editForm.dateTime) : new Date();
+      if (isNaN(dateTime.getTime())) {
+        throw new Error('Invalid date format');
+      }
+      
+      const updatedDebate = {
+        ...currentDebate,
+        title: editForm.title,
+        description: editForm.description,
+        category: editForm.category,
+        tags: editForm.tags,
+        dateTime: dateTime.toISOString(),
+        status: editForm.status,
+        featuredImage: editForm.featuredImage,
+        votingEnabled: editForm.votingEnabled
+      };
+      
+      await updateDebate(currentDebate._id, updatedDebate);
+      handleCloseModal();
+    } catch (error) {
+      console.error('Failed to update debate:', error);
+      // You could add error handling UI here
+    }
   };
   
   // Handle delete debate
-  const handleDeleteDebate = (e, debateId) => {
-    e.preventDefault(); // Prevent the Link from navigating to debate details
-    e.stopPropagation(); // Stop event propagation
-    
-    if (window.confirm('Are you sure you want to delete this debate? This action cannot be undone.')) {
-      deleteDebate(debateId);
-    }
-  };
+
+const handleDeleteDebate = (debateId) => {
+  
+  deleteDebate(debateId)
+    .then(() => {
+      console.log(`Debate with ID ${debateId} deleted successfully.`);
+    })
+    .catch((error) => {
+      console.error('Error deleting debate:', error.message);
+    });
+};
+
   
   if (loading) {
     return <LoadingScreen message="Loading debates..." />;
@@ -267,15 +364,11 @@ const DebatesList = () => {
       {filteredDebates.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredDebates.map((debate) => (
-            <Link
-              key={debate.id}
-              to={`/debates/${debate.id}`}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow relative"
-            >
+            <div key={debate._id} className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow">
               {/* Debate Image */}
               <div className="relative h-48">
                 <img
-                  src={debate.featuredImage}
+                  src={debate.featuredImage || 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg'}
                   alt={debate.title}
                   className="w-full h-full object-cover"
                 />
@@ -288,40 +381,32 @@ const DebatesList = () => {
                   </div>
                 )}
                 
-                {debate.status === 'upcoming' && (
-                  <div className="absolute top-4 left-4 bg-info/90 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                    <Calendar size={14} className="mr-1" />
-                    Upcoming
-                  </div>
-                )}
-                
-                {debate.status === 'completed' && (
-                  <div className="absolute top-4 left-4 bg-success/90 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center">
-                    <Award size={14} className="mr-1" />
-                    Completed
-                  </div>
-                )}
-                
                 {/* Category Badge */}
                 <div className="absolute top-4 right-4 bg-white/90 text-neutral-800 px-3 py-1 rounded-full text-sm font-medium">
                   {debate.category}
                 </div>
-
-                {/* Edit and Delete Buttons */}
-                <div className="absolute bottom-4 right-4 flex gap-2">
-                  <button 
-                    onClick={(e) => handleEditDebate(e, debate.id)}
-                    className="bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors"
-                    title="Edit Debate"
+                
+                {/* Voting Badge if enabled */}
+                {debate.votingEnabled && (
+                  <div className="absolute bottom-4 left-4 bg-white/90 text-neutral-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                    <ThumbsUp size={12} className="mr-1 text-neutral-600" />
+                    Voting Enabled
+                  </div>
+                )}
+                
+                {/* Action Buttons */}
+                <div className="absolute bottom-4 right-4 flex space-x-2">
+                  <button
+                    onClick={() => handleEditClick(debate)}
+                    className="p-2 bg-white rounded-full shadow-lg hover:bg-primary hover:text-white transition-colors"
                   >
-                    <Edit size={16} className="text-neutral-700" />
+                    <Edit2 size={16} />
                   </button>
-                  <button 
-                    onClick={(e) => handleDeleteDebate(e, debate.id)}
-                    className="bg-white p-2 rounded-full shadow-md hover:bg-neutral-100 transition-colors"
-                    title="Delete Debate"
+                  <button
+                    onClick={() => handleDeleteDebate(debate._id)}
+                    className="p-2 bg-white rounded-full shadow-lg hover:bg-error hover:text-white transition-colors"
                   >
-                    <Trash2 size={16} className="text-error" />
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>
@@ -391,7 +476,7 @@ const DebatesList = () => {
                   )}
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       ) : (
@@ -408,6 +493,182 @@ const DebatesList = () => {
           <Link to="/debates/create" className="btn btn-primary">
             Create a Debate
           </Link>
+        </div>
+      )}
+      
+      {/* Edit Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-neutral-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold text-neutral-800">Edit Debate</h2>
+                <button 
+                  onClick={handleCloseModal}
+                  className="p-2 rounded-full hover:bg-neutral-100 text-neutral-500"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6">
+              <div className="grid grid-cols-1 gap-6">
+                {/* Title */}
+                <div>
+                  <label htmlFor="title" className="label">Title</label>
+                  <input
+                    type="text"
+                    id="title"
+                    name="title"
+                    value={editForm.title}
+                    onChange={handleFormChange}
+                    className="input w-full"
+                    required
+                  />
+                </div>
+                
+                {/* Description */}
+                <div>
+                  <label htmlFor="description" className="label">Description</label>
+                  <textarea
+                    id="description"
+                    name="description"
+                    value={editForm.description}
+                    onChange={handleFormChange}
+                    className="input w-full h-32"
+                    required
+                  />
+                </div>
+                
+                {/* Category & Status */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label htmlFor="category" className="label">Category</label>
+                    <select
+                      id="category"
+                      name="category"
+                      value={editForm.category}
+                      onChange={handleFormChange}
+                      className="input w-full"
+                      required
+                    >
+                      <option value="" disabled>Select a category</option>
+                      {categories.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label htmlFor="status" className="label">Status</label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={editForm.status}
+                      onChange={handleFormChange}
+                      className="input w-full"
+                      required
+                    >
+                      <option value="upcoming">Upcoming</option>
+                      <option value="live">Live</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Date & Time */}
+                <div>
+                  <label htmlFor="dateTime" className="label">Date & Time</label>
+                  <input
+                    type="datetime-local"
+                    id="dateTime"
+                    name="dateTime"
+                    value={editForm.dateTime}
+                    onChange={handleFormChange}
+                    className="input w-full"
+                    required
+                  />
+                </div>
+                
+                {/* Tags */}
+                <div>
+                  <label htmlFor="tags" className="label">Tags (comma separated)</label>
+                  <input
+                    type="text"
+                    id="tags"
+                    name="tags"
+                    value={editForm.tags.join(', ')}
+                    onChange={handleTagsChange}
+                    className="input w-full"
+                    placeholder="e.g. AI, Ethics, Future"
+                  />
+                </div>
+                
+                {/* Featured Image URL */}
+                <div>
+                  <label htmlFor="featuredImage" className="label">Featured Image URL</label>
+                  <input
+                    type="url"
+                    id="featuredImage"
+                    name="featuredImage"
+                    value={editForm.featuredImage}
+                    onChange={handleFormChange}
+                    className="input w-full"
+                    placeholder="https://example.com/image.jpg"
+                  />
+                  {editForm.featuredImage && (
+                    <div className="mt-2">
+                      <p className="text-sm text-neutral-500 mb-1">Preview:</p>
+                      <img 
+                        src={editForm.featuredImage} 
+                        alt="Featured image preview" 
+                        className="h-32 object-cover rounded-md border border-neutral-200"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://images.pexels.com/photos/3184360/pexels-photo-3184360.jpeg';
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                {/* Voting Enabled */}
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="votingEnabled"
+                    name="votingEnabled"
+                    checked={editForm.votingEnabled}
+                    onChange={handleFormChange}
+                    className="checkbox"
+                  />
+                  <label htmlFor="votingEnabled" className="ml-2 label cursor-pointer">
+                    Enable voting for this debate
+                  </label>
+                </div>
+                
+                {/* Action Buttons */}
+                <div className="flex justify-end space-x-4 mt-4">
+                  <button
+                    type="button"
+                    onClick={handleCloseModal}
+                    className="btn btn-ghost"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
