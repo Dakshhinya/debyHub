@@ -9,7 +9,7 @@ import {
   ExternalLink, AlertCircle, LogOut, Settings
 } from 'lucide-react';
 import LoadingScreen from '../../components/common/LoadingScreen.jsx';
-import TwilioVideo from 'twilio-video';
+
 import { io } from 'socket.io-client';
 
 const DebateRoom = () => {
