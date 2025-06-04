@@ -16,7 +16,7 @@ export const DebateProvider = ({ children }) => {
 
         const token = localStorage.getItem('token');
 
-        const res = await axios.get('http://localhost:5000/api/debates', {
+        const res = await axios.get('https://debyhub.onrender.com/api/debates', {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -53,7 +53,7 @@ export const DebateProvider = ({ children }) => {
       dateCreated: new Date().toISOString(),
     };
 
-    const response = await axios.post('http://localhost:5000/api/debates', newDebate, {
+    const response = await axios.post('https://debyhub.onrender.com/api/debates', newDebate, {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${localStorage.getItem('token')}`,
@@ -70,7 +70,7 @@ export const DebateProvider = ({ children }) => {
   const updateDebate = async (id, updates) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:5000/api/debates/${id}`, {
+      const response = await fetch(`https://debyhub.onrender.com/api/debates/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +116,7 @@ export const DebateProvider = ({ children }) => {
   const deleteDebate = async (id) => {
     const token = localStorage.getItem('token');
     try {
-      const response = await fetch(`http://localhost:5000/api/debates/${id}`, {
+      const response = await fetch(`https://debyhub.onrender.com/api/debates/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

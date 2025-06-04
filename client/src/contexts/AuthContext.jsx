@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // This would be replaced with an actual API call
       // Simulating API response
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
+      const response = await axios.post('https://debyhub.onrender.com/api/auth/login', {
         // name,
         email,
         password,
@@ -56,7 +56,7 @@ export const AuthProvider = ({ children }) => {
     try {
       // This would be replaced with an actual API call
       // Simulating API response
-      const response = await axios.post('http://localhost:5000/api/auth/register', {
+      const response = await axios.post('https://debyhub.onrender.com/api/auth/register', {
         name,
         email,
         password,
